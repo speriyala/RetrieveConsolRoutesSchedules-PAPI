@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	
+	<sub-flow name="getroute-Fastgo-Sub_Flow" doc:id="c37a0a3e-3d24-476d-bfb8-f7c65df5c82f" >
+		<set-variable value="#[&quot;/api/&quot; ++ (vars.transportType default &quot;Bus&quot;) ++ p('http.requestorFastgo.routespath')]" doc:name="Set Variable" doc:id="1b0a5d6e-9691-4ed1-908f-3c410024504e" variableName="path" />
+		<ee:cache doc:name="Cache_FastGo" doc:id="782ea99c-d354-46b7-adc4-65d8bd1445ec" cachingStrategy-ref="Caching_Strategy" >
+			<http:request method="GET" doc:name="Request" doc:id="47885393-d997-48bf-bd16-91eb96787028" config-ref="HTTP_ExtSysRequestFastgo_configuration" path="#[vars.path]" >
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"transactionId" : vars.transactionId
+}]]]></http:headers>
+			</http:request>
+			<ee:transform doc:name="Transform Message" doc:id="5cf01a6d-30df-442e-b211-452a0fe9f615" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map(item,index)->
+  	{
+     "companyCode": "FastGo",
+                      "originLocation": {
+                        "locationCode": item.departureLocationCode,
+                        "locationDesc": "Beauna Vista - Singapore",
+                      },
+                      "destinationLocation": {
+                        "locationCode": item.arrivalLocationCode,
+                        "locationDesc": "Klang - Malaysia"
+                   		}
+      }
+                   		]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="ddaae1f4-4acf-428b-ac5f-779f6b19ed4d" message="logger inside cache for different transport type plus company name plus route in Fastgo" />
+		</ee:cache>
+	</sub-flow>
+	<sub-flow name="getroute-TravelOnTip-Sub_Flow" doc:id="a255607c-8c53-4adc-8352-78955e8e3d84" >
+		<set-variable value="#[&quot;/api/&quot; ++ (vars.transportType default &quot;Bus&quot;) ++ p('http.requestorTravel.routespath')]" doc:name="Set Variable" doc:id="f2ec4ff9-b144-4152-8719-98a5844953b4" variableName="path" />
+		<ee:cache doc:name="Cache" doc:id="1315a5b5-567b-476a-8cd4-81bf5f47676e" cachingStrategy-ref="Caching_Strategy">
+			<http:request method="GET" doc:name="Request" doc:id="976b5fe8-7095-40c2-98e5-2bde3037df75" config-ref="HTTP_RequestTravel_configuration" path="#[vars.path]" >
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"transactionId" : vars.transactionId
+}]]]></http:headers>
+			</http:request>
+			<ee:transform doc:name="Transform Message" doc:id="fa439bd6-5ca4-4812-a47d-52f969bcef49">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map(item,index)->
+  	{
+     "companyCode": "TravelOnTip",
+                      "originLocation": {
+                        "locationCode": item.departureLocationCode,
+                        "locationDesc": "Beauna Vista - Singapore",
+                      },
+                      "destinationLocation": {
+                        "locationCode": item.arrivalLocationCode,
+                        "locationDesc": "Klang - Malaysia"
+                   		}
+      }
+                   		]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		</ee:cache>
+	</sub-flow>
+	<sub-flow name="getRoute-implementationSub_Flow" doc:id="19e82c0f-a1f2-4067-8629-97166a53ca83" >
+		<choice doc:name="Choice" doc:id="789f8f7e-9f2a-40c2-a822-1d67bd698d95" >
+			<when expression="#[vars.transportCompany == 'TravelOnTip']">
+				<flow-ref doc:name="TravlOnTip-Route-FlowRef" doc:id="3b9cad63-88ac-4769-9a29-26f40c163fc9" name="getroute-TravelOnTip-Sub_Flow" />
+			</when>
+			<when expression="#[vars.transportCompany == 'FastGo']">
+				<flow-ref doc:name="Fastgo-Route-FlowRef" doc:id="c959a578-8297-4ba1-bfc2-9b4ee9fc3fd8" name="getroute-Fastgo-Sub_Flow"/>
+			</when>
+			<otherwise>
+				<scatter-gather doc:name="Scatter-Gather" doc:id="b6bcce8f-0167-4be3-afd3-cd30725c8a4e" >
+					<route >
+						<flow-ref doc:name="Fastgo-SubFlow-reference" doc:id="f9213f3e-78e8-406b-b803-7a8d20197e35" name="getroute-Fastgo-Sub_Flow" />
+					</route>
+					<route >
+						<flow-ref doc:name="Flow Reference" doc:id="b7ead339-1304-4040-aee0-248865f88cf4" name="getroute-TravelOnTip-Sub_Flow" />
+					</route>
+				</scatter-gather>
+				<ee:transform doc:name="Transform Message" doc:id="e45ec274-5956-47df-988f-7183c7b42d08" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+flatten(payload..payload)]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</sub-flow>
+</mule>

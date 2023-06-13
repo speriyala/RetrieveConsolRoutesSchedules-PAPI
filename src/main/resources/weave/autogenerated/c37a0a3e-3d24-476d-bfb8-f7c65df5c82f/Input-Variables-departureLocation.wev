@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_c37a0a3e_3d24_476d_bfb8_f7c65df5c82f_Input_Variables_departureLocation = String | Null
+

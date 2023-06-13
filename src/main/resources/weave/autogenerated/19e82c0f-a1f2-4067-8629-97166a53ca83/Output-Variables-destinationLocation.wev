@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_19e82c0f_a1f2_4067_8629_97166a53ca83_Output_Variables_destinationLocation = String | Null
+

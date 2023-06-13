@@ -1,0 +1,14 @@
+http:
+  listener:
+    host: "localhost"
+    port: "9085"
+  requestorTravel:
+    host: "localhost"
+    port: "9083"
+    routespath: "/TravelOnTip/routes"
+    schedulespath: "/TravelOnTip/schedules"
+  requestorFastgo:
+    host: "localhost"
+    port: "9084"
+    routespath: "/FastGo/routes"
+    schedulespath: "/FastGo/schedules"

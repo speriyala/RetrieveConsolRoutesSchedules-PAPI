@@ -1,0 +1,93 @@
+#%RAML 1.0
+title: RetrieveConsolRoutesSchedulesPAPI
+description: Process API used to retrieve consolidated routes & schedules
+
+types:
+  routesDataType: !include /routes/routedataType.raml
+  departDataType: !include /schedules/departuredataType.raml
+
+uses: 
+  common: /libraries/common-library.raml
+
+/booking:
+  /{transportType}:
+    /routes:
+      get:
+        is:
+          - common.transactionId
+        queryParameters:
+          companyName:
+            required: false
+            type: string
+            example: "Air India"
+          departureLocation:
+            required : false
+            type: string
+            example: "BEN-SG"
+          destinationLocation:
+            required : false
+            type: string
+            example: "KLG-MY"
+        responses:
+          200:
+            body:
+              application/json:
+                type: routesDataType
+                example: !include /routes/route-200-example.json
+
+
+          400:
+            body:
+              application/json:
+                type: object
+                properties:
+                  status: 
+                    required: true
+                    type: number
+                    example: 400
+                  message: 
+                    required: true
+                    type: string
+                    example: "check params & attributes"
+    
+    /schedules:
+      get:
+        is:
+          - common.transactionId
+        queryParameters:
+          companyName:
+            required: false
+            type: string
+            example: "Air India"
+          departureLocation:
+            required : false
+            type: string
+            example: "BEN-SG"
+          destinationLocation:
+            required : false
+            type: string
+            example: "KLG-MY"   
+          requestTimezone:
+            required : false
+            type: string
+            example:  "0800"
+        responses:
+          200:
+            body:
+              application/json:
+                type: departDataType
+                example: !include /schedules/schedule-200-example.json
+
+          400:
+            body:
+              application/json:
+                type: object
+                properties:
+                  status: 
+                    required: true
+                    type: number
+                    example: 400
+                  message: 
+                    required: true
+                    type: string
+                    example: "check params & attributes"          
